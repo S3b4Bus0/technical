@@ -100,7 +100,7 @@ def resampled_merge(original: DataFrame, resampled: DataFrame, fill_na=True):
         resampled,
         how="left",
         left_on="date",
-        right_on=f"resample_{resampled_int}_date_merge",
+        right_on=f"resample_{resampled_int}_date",
     )
     dataframe = dataframe.drop(f"resample_{resampled_int}_date_merge", axis=1)
 
