@@ -97,19 +97,19 @@ def resampled_merge(original: DataFrame, resampled: DataFrame, fill_na=True, pro
 
     if protect_open_candle:
         dataframe = merge(
-        original,
-        resampled,
-        how="left",
-        left_on="date",
-        right_on=f"resample_{resampled_int}_date_merge",
+            original,
+            resampled,
+            how="left",
+            left_on="date",
+            right_on=f"resample_{resampled_int}_date_merge",
         )
     else:
         dataframe = merge(
-        original,
-        resampled,
-        how="left",
-        left_on="date",
-        right_on=f"resample_{resampled_int}_date",
+            original,
+            resampled,
+            how="left",
+            left_on="date",
+            right_on=f"resample_{resampled_int}_date",
         )
 
         
