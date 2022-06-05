@@ -68,7 +68,7 @@ def resample_to_interval(dataframe: DataFrame, interval):
     return df
 
 
-def resampled_merge(original: DataFrame, resampled: DataFrame, fill_na=True):
+def resampled_merge(original: DataFrame, resampled: DataFrame, fill_na=True, protect_open_candle=True):
     """
     Merges a resampled dataset back into the orignal data set.
     Resampled candle will match OHLC only if full timespan is available in original dataframe.
@@ -95,13 +95,24 @@ def resampled_merge(original: DataFrame, resampled: DataFrame, fill_na=True):
     # rename all the columns to the correct interval
     resampled.columns = [f"resample_{resampled_int}_{col}" for col in resampled.columns]
 
-    dataframe = merge(
+    if protect_open_candle:
+        dataframe = merge(
+        original,
+        resampled,
+        how="left",
+        left_on="date",
+        right_on=f"resample_{resampled_int}_date_merge",
+        )
+    else:
+        dataframe = merge(
         original,
         resampled,
         how="left",
         left_on="date",
         right_on=f"resample_{resampled_int}_date",
-    )
+        )
+
+        
     dataframe = dataframe.drop(f"resample_{resampled_int}_date_merge", axis=1)
 
     if fill_na:
