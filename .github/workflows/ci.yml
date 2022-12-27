@@ -4,12 +4,17 @@ on:
   push:
     branches:
       - master
+      - ci/*
     tags:
   release:
     types: [published]
   pull_request:
   schedule:
     - cron:  '0 5 * * 4'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -18,13 +23,13 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-18.04, macos-latest ]
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v3.1.2
+      uses: actions/setup-python@v4.4.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -108,7 +113,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v3.1.2
+      uses: actions/setup-python@v4.4.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -123,9 +128,9 @@ jobs:
       run: |
         mkdir build_helpers/
         # TODO: Update this to not download 3 files while only needing 1.
-        Invoke-WebRequest -Outfile build_helpers/TA_Lib-0.4.24-cp38-cp38-win_amd64.whl https://github.com/freqtrade/freqtrade/raw/develop/build_helpers/TA_Lib-0.4.24-cp38-cp38-win_amd64.whl
-        Invoke-WebRequest -Outfile build_helpers/TA_Lib-0.4.24-cp39-cp39-win_amd64.whl https://github.com/freqtrade/freqtrade/raw/develop/build_helpers/TA_Lib-0.4.24-cp39-cp39-win_amd64.whl
-        Invoke-WebRequest -Outfile build_helpers/TA_Lib-0.4.24-cp310-cp310-win_amd64.whl https://github.com/freqtrade/freqtrade/raw/develop/build_helpers/TA_Lib-0.4.24-cp310-cp310-win_amd64.whl
+        Invoke-WebRequest -Outfile build_helpers/TA_Lib-0.4.25-cp38-cp38-win_amd64.whl https://github.com/freqtrade/freqtrade/raw/develop/build_helpers/TA_Lib-0.4.25-cp38-cp38-win_amd64.whl
+        Invoke-WebRequest -Outfile build_helpers/TA_Lib-0.4.25-cp39-cp39-win_amd64.whl https://github.com/freqtrade/freqtrade/raw/develop/build_helpers/TA_Lib-0.4.25-cp39-cp39-win_amd64.whl
+        Invoke-WebRequest -Outfile build_helpers/TA_Lib-0.4.25-cp310-cp310-win_amd64.whl https://github.com/freqtrade/freqtrade/raw/develop/build_helpers/TA_Lib-0.4.25-cp310-cp310-win_amd64.whl
         Invoke-WebRequest -Outfile build_helpers/install_windows.ps1 https://github.com/freqtrade/freqtrade/raw/develop/build_helpers/install_windows.ps1
         ./build_helpers/install_windows.ps1
 
@@ -141,19 +146,12 @@ jobs:
           details: Technical CI failed on ${{ matrix.os }}
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
 
-  cleanup-prior-runs:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Cleanup previous runs on this branch
-      uses: rokroskar/workflow-run-cleanup-action@v0.3.3
-      if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master' && github.repository == 'freqtrade/technical'"
-      env:
-        GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
   # Notify on discord only once - when CI completes (and after deploy) in case it's successfull
   notify-complete:
     needs: [ build, build_windows ]
     runs-on: ubuntu-latest
+    # Discord notification can't handle schedule events
+    if: (github.event_name != 'schedule')
     steps:
     - name: Check user permission
       id: check
@@ -179,7 +177,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v3.1.2
+      uses: actions/setup-python@v4.4.0
       with:
         python-version: 3.8
 
